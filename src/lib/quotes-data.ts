@@ -1,0 +1,185 @@
+import { MotivationalQuote, BadgeDefinition } from '@/types';
+
+export const INITIAL_QUOTES: Omit<MotivationalQuote, 'id'>[] = [
+  {
+    quote: "We are what we repeatedly do. Excellence, then, is not an act, but a habit.",
+    author: "Will Durant (summarizing Aristotle)",
+    category: "Consistency",
+    is_system: true,
+  },
+  {
+    quote: "Small disciplines repeated with consistency every day lead to great achievements gained slowly over time.",
+    author: "John C. Maxwell",
+    category: "Consistency",
+    is_system: true,
+  },
+  {
+    quote: "You do not rise to the level of your goals. You fall to the level of your systems.",
+    author: "James Clear",
+    category: "Discipline",
+    is_system: true,
+  },
+  {
+    quote: "Discipline is choosing between what you want now and what you want most.",
+    author: "Abraham Lincoln",
+    category: "Discipline",
+    is_system: true,
+  },
+  {
+    quote: "The secret of getting ahead is getting started. The secret of getting started is breaking your complex overwhelming tasks into small manageable tasks.",
+    author: "Mark Twain",
+    category: "Procrastination",
+    is_system: true,
+  },
+  {
+    quote: "Live as if you were to die tomorrow. Learn as if you were to live forever.",
+    author: "Mahatma Gandhi",
+    category: "Mindset",
+    is_system: true,
+  },
+  {
+    quote: "Concentrate all your thoughts upon the work in hand. The sun's rays do not burn until brought to a focus.",
+    author: "Alexander Graham Bell",
+    category: "Focus",
+    is_system: true,
+  },
+  {
+    quote: "It is not that I'm so smart. But I stay with the questions much longer.",
+    author: "Albert Einstein",
+    category: "Perseverance",
+    is_system: true,
+  },
+  {
+    quote: "Continuous effort—not strength or intelligence—is the key to unlocking our potential.",
+    author: "Winston Churchill",
+    category: "Perseverance",
+    is_system: true,
+  },
+  {
+    quote: "The expert in anything was once a beginner.",
+    author: "Helen Hayes",
+    category: "Mindset",
+    is_system: true,
+  },
+  {
+    quote: "Deep work is the ability to focus without distraction on a cognitively demanding task.",
+    author: "Cal Newport",
+    category: "Focus",
+    is_system: true,
+  },
+  {
+    quote: "Do something today that your future self will thank you for.",
+    author: "Sean Patrick Flanery",
+    category: "Discipline",
+    is_system: true,
+  },
+  {
+    quote: "Success isn't always about greatness. It's about consistency. Consistent hard work leads to success. Greatness will come.",
+    author: "Dwayne Johnson",
+    category: "Consistency",
+    is_system: true,
+  },
+  {
+    quote: "Nothing in the world can take the place of persistence. Persistence and determination alone are omnipotent.",
+    author: "Calvin Coolidge",
+    category: "Perseverance",
+    is_system: true,
+  },
+  {
+    quote: "Action is the foundational key to all success.",
+    author: "Pablo Picasso",
+    category: "Procrastination",
+    is_system: true,
+  }
+];
+
+export const BADGE_DEFINITIONS: BadgeDefinition[] = [
+  {
+    id: 'first_session',
+    title: 'First Step',
+    description: 'Completed your very first study session.',
+    icon: 'Sparkles',
+    category: 'habit',
+    requiredValue: 1,
+  },
+  {
+    id: 'streak_3',
+    title: 'Spark Ignited',
+    description: 'Maintained a 3-day study streak.',
+    icon: 'Flame',
+    category: 'streak',
+    requiredValue: 3,
+  },
+  {
+    id: 'streak_7',
+    title: 'Weekly Warrior',
+    description: 'Unbroken 7-day study streak.',
+    icon: 'Zap',
+    category: 'streak',
+    requiredValue: 7,
+  },
+  {
+    id: 'streak_14',
+    title: 'Fortitude Master',
+    description: 'Maintained a 14-day study streak.',
+    icon: 'ShieldCheck',
+    category: 'streak',
+    requiredValue: 14,
+  },
+  {
+    id: 'streak_30',
+    title: 'Unstoppable Habit',
+    description: 'Achieved a legendary 30-day streak.',
+    icon: 'Trophy',
+    category: 'streak',
+    requiredValue: 30,
+  },
+  {
+    id: 'hours_5',
+    title: '5 Hours Dedicated',
+    description: 'Logged 5 total hours of focused learning.',
+    icon: 'Clock',
+    category: 'time',
+    requiredValue: 300, // 300 mins
+  },
+  {
+    id: 'hours_20',
+    title: '20 Hours Scholar',
+    description: 'Logged 20 total hours of learning.',
+    icon: 'BookOpen',
+    category: 'time',
+    requiredValue: 1200, // 1200 mins
+  },
+  {
+    id: 'hours_50',
+    title: '50 Hours Master',
+    description: 'Logged 50 total hours of deep study.',
+    icon: 'GraduationCap',
+    category: 'time',
+    requiredValue: 3000,
+  },
+  {
+    id: 'early_bird',
+    title: 'Early Bird',
+    description: 'Completed a study session before 8:00 AM.',
+    icon: 'Sun',
+    category: 'habit',
+    requiredValue: 1,
+  },
+  {
+    id: 'night_owl',
+    title: 'Night Owl',
+    description: 'Completed a study session after 10:00 PM.',
+    icon: 'Moon',
+    category: 'habit',
+    requiredValue: 1,
+  },
+  {
+    id: 'weekend_warrior',
+    title: 'Weekend Warrior',
+    description: 'Studied on both Saturday and Sunday in a single weekend.',
+    icon: 'Award',
+    category: 'habit',
+    requiredValue: 1,
+  },
+];
