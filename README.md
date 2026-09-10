@@ -1,36 +1,71 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Learn-with-stimulation (StudyPulse) ⚡📚
 
-## Getting Started
+An interactive, high-energy study companion and reminder app built with **Next.js 16 (Turbopack)**, **Tailwind CSS v4**, and **Supabase**.
 
-First, run the development server:
+Features smart study schedules, ambient audio stimulation, streak tracking, Pomodoro focus timers, and daily motivational quotes.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+---
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## ✨ Features
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- 📅 **Smart Study Schedules**: Plan and manage recurring and single study sessions with priority tags and notifications.
+- ⏱️ **Focus Timer & Ambient Stimulation**: Customizable Pomodoro intervals with optional background white noise / binaural beats.
+- 🔥 **Streak & Analytics**: Track continuous study habits and weekly hour commitments.
+- 💡 **Daily Motivational Quotes**: Boost your focus and mindset every single morning.
+- ☁️ **Supabase Sync**: Optional cloud database persistence with real-time fallback to local storage.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+## 🚀 Deploy to Vercel
 
-To learn more about Next.js, take a look at the following resources:
+### One-Click Deploy
+Click the button below to deploy this repository directly to Vercel:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fjayasrids2008-svg%2FLearn-with-stimulation&env=NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_ANON_KEY&envDescription=Supabase%20URL%20and%20Anon%20Key%20(optional%20for%20cloud%20sync))
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Manual Vercel Deployment Steps
 
-## Deploy on Vercel
+1. Push your latest code to your GitHub repository:
+   ```bash
+   git add .
+   git commit -m "Prepare for Vercel deployment"
+   git push origin main
+   ```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+2. Go to [vercel.com](https://vercel.com) and log in.
+3. Click **"Add New..."** ➔ **"Project"**.
+4. Import the **`Learn-with-stimulation`** repository.
+5. In **Environment Variables**, optionally add:
+   - `NEXT_PUBLIC_SUPABASE_URL` = *(Your Supabase project URL)*
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY` = *(Your Supabase public anon key)*
+6. Click **Deploy**!
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+
+## 🛠️ Local Development
+
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+2. Copy environment variables template:
+   ```bash
+   cp .env.example .env.local
+   ```
+
+3. Run the development server:
+   ```bash
+   npm run dev
+   ```
+
+4. Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+---
+
+## 📦 Tech Stack
+
+- **Framework**: Next.js 16 (App Router)
+- **Styling**: Tailwind CSS v4 & Lucide Icons
+- **Database**: Supabase (PostgreSQL & Row Level Security)
+- **Deployment**: Vercel
