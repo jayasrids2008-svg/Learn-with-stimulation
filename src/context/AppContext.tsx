@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { 
   Profile, 
   StudySchedule, 
@@ -8,19 +8,21 @@ import {
   MotivationalQuote, 
   UserBadge, 
   StreakStats,
-  DayOfWeek
+  DayOfWeek,
+  PracticeResult
 } from '@/types';
-import { INITIAL_QUOTES, BADGE_DEFINITIONS } from '@/lib/quotes-data';
+import { INITIAL_QUOTES } from '@/lib/quotes-data';
 import { calculateStreakStats, processSessionCompletion, getLocalDateString } from '@/lib/streak-engine';
 import { sendStudyReminder, requestNotificationPermission } from '@/lib/notifications';
 import { soundManager } from '@/lib/sound';
-import { createClient, isSupabaseConfigured } from '@/lib/supabase/client';
+import { isSupabaseConfigured } from '@/lib/supabase/client';
 
-interface ReminderAlert {
+export interface ActiveAlarmState {
   id: string;
   schedule: StudySchedule;
   quote: MotivationalQuote;
   timestamp: string;
+  isRinging: boolean;
 }
 
 interface AppContextType {
@@ -30,24 +32,28 @@ interface AppContextType {
   quotes: MotivationalQuote[];
   badges: UserBadge[];
   streakStats: StreakStats;
+  practiceResults: PracticeResult[];
   soundEnabled: boolean;
   setSoundEnabled: (enabled: boolean) => void;
-  activeAlert: ReminderAlert | null;
-  dismissAlert: () => void;
+  activeAlarm: ActiveAlarmState | null;
+  dismissAlarm: () => void;
+  snoozeAlarm: (minutes?: number) => void;
+  triggerTestAlarm: () => void;
   addSchedule: (schedule: Omit<StudySchedule, 'id' | 'user_id' | 'created_at'>) => Promise<void>;
   updateSchedule: (id: string, updates: Partial<StudySchedule>) => Promise<void>;
   deleteSchedule: (id: string) => Promise<void>;
   toggleScheduleActive: (id: string) => Promise<void>;
   recordStudySession: (session: {
     subject: string;
+    topic?: string;
     duration_minutes: number;
     notes?: string;
     rating?: number;
     schedule_id?: string | null;
   }) => Promise<{ newBadges: UserBadge[]; streakIncremented: boolean }>;
+  savePracticeResult: (result: PracticeResult) => Promise<void>;
   addCustomQuote: (quote: string, author: string, category: MotivationalQuote['category']) => Promise<void>;
   getRandomQuote: (category?: MotivationalQuote['category']) => MotivationalQuote;
-  triggerTestReminder: () => void;
   updateDailyGoal: (minutes: number) => Promise<void>;
   updateProfileName: (name: string) => Promise<void>;
   notificationPermission: NotificationPermission;
@@ -72,67 +78,73 @@ const DEFAULT_SCHEDULES: StudySchedule[] = [
   {
     id: 'sch-1',
     user_id: 'demo-user-id',
-    subject: 'Data Structures & Algorithms',
+    subject: 'Mathematics',
+    topic: 'Calculus & Derivatives',
+    difficulty: 'Intermediate',
     start_time: '18:30',
     duration_minutes: 45,
     days_of_week: [1, 2, 3, 4, 5], // Mon-Fri
     is_active: true,
-    notes: 'Focus on Binary Trees and Dynamic Programming',
+    notes: 'Master Power Rule, Chain Rule & critical point optimization with practice exercises.',
     created_at: new Date().toISOString(),
   },
   {
     id: 'sch-2',
     user_id: 'demo-user-id',
-    subject: 'System Design & Architecture',
+    subject: 'Computer Science',
+    topic: 'Data Structures & Algorithms',
+    difficulty: 'Intermediate',
     start_time: '20:00',
     duration_minutes: 30,
     days_of_week: [1, 3, 5], // Mon, Wed, Fri
     is_active: true,
-    notes: 'Scalability, Caching, and Load Balancers',
+    notes: 'Binary Search Trees, Hash Maps & Breadth-First Search traversals.',
     created_at: new Date().toISOString(),
   },
   {
     id: 'sch-3',
     user_id: 'demo-user-id',
-    subject: 'Physics & Applied Mathematics',
+    subject: 'Physics',
+    topic: 'Thermodynamics & Heat Engines',
+    difficulty: 'Intermediate',
     start_time: '10:00',
     duration_minutes: 60,
     days_of_week: [0, 6], // Weekends
     is_active: true,
-    notes: 'Review calculus and mechanics problem sets',
+    notes: 'Review Carnot efficiency and Second Law of Thermodynamics problem sets.',
     created_at: new Date().toISOString(),
   }
 ];
 
-// Helper to seed past sessions for a nice initial streak experience
+// Helper to seed past sessions
 const generateInitialSessions = (): StudySession[] => {
   const sessions: StudySession[] = [];
   const now = new Date();
 
-  // Session 2 days ago
   const d2 = new Date(now);
   d2.setDate(d2.getDate() - 2);
   sessions.push({
     id: 'sess-1',
     user_id: 'demo-user-id',
-    subject: 'Data Structures & Algorithms',
+    subject: 'Mathematics',
+    topic: 'Calculus & Derivatives',
     duration_minutes: 45,
     completed_at: d2.toISOString(),
-    notes: 'Solved 2 medium tree traversal questions.',
+    notes: 'Completed practice test on definite integrals and power rule.',
     rating: 5,
     created_at: d2.toISOString(),
   });
 
-  // Session 1 day ago (yesterday)
   const d1 = new Date(now);
   d1.setDate(d1.getDate() - 1);
   sessions.push({
     id: 'sess-2',
     user_id: 'demo-user-id',
-    subject: 'System Design & Architecture',
+    subject: 'Computer Science',
+    topic: 'Data Structures & Algorithms',
     duration_minutes: 35,
     completed_at: d1.toISOString(),
-    notes: 'Learned CDN architecture and edge caching.',
+    notes: 'Practiced BFS traversal queue implementation.',
     rating: 4,
     created_at: d1.toISOString(),
   });
@@ -153,6 +165,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   });
   const [schedules, setSchedules] = useState<StudySchedule[]>(DEFAULT_SCHEDULES);
   const [sessions, setSessions] = useState<StudySession[]>(generateInitialSessions());
+  const [practiceResults, setPracticeResults] = useState<PracticeResult[]>([]);
   const [quotes, setQuotes] = useState<MotivationalQuote[]>(() => {
     return INITIAL_QUOTES.map((q, idx) => ({
       id: `sys-quote-${idx + 1}`,
@@ -176,11 +189,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   ]);
 
   const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
-  const [activeAlert, setActiveAlert] = useState<ReminderAlert | null>(null);
+  const [activeAlarm, setActiveAlarm] = useState<ActiveAlarmState | null>(null);
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default');
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isSupabaseConnected, setIsSupabaseConnected] = useState<boolean>(false);
   const [lastNotifiedSchedule, setLastNotifiedSchedule] = useState<{ [id: string]: string }>({});
+  
+  const snoozeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Initialize from LocalStorage or Supabase
   useEffect(() => {
@@ -200,6 +215,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           const storedQuotes = localStorage.getItem('studypulse_quotes');
           const storedBadges = localStorage.getItem('studypulse_badges');
           const storedSound = localStorage.getItem('studypulse_sound');
+          const storedPractice = localStorage.getItem('studypulse_practice');
 
           if (storedProfile) setProfile(JSON.parse(storedProfile));
           if (storedSchedules) setSchedules(JSON.parse(storedSchedules));
@@ -207,6 +223,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           if (storedQuotes) setQuotes(JSON.parse(storedQuotes));
           if (storedBadges) setBadges(JSON.parse(storedBadges));
           if (storedSound !== null) setSoundEnabled(JSON.parse(storedSound));
+          if (storedPractice) setPracticeResults(JSON.parse(storedPractice));
         } catch (e) {
           console.warn('Error reading from localStorage', e);
         }
@@ -228,11 +245,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         localStorage.setItem('studypulse_quotes', JSON.stringify(quotes));
         localStorage.setItem('studypulse_badges', JSON.stringify(badges));
         localStorage.setItem('studypulse_sound', JSON.stringify(soundEnabled));
+        localStorage.setItem('studypulse_practice', JSON.stringify(practiceResults));
       } catch (e) {
         console.warn('Error saving to localStorage', e);
       }
     }
-  }, [profile, schedules, sessions, quotes, badges, soundEnabled, isLoading]);
+  }, [profile, schedules, sessions, quotes, badges, soundEnabled, practiceResults, isLoading]);
 
   // Request notification permission
   const requestPermission = useCallback(async (): Promise<NotificationPermission> => {
@@ -252,31 +270,69 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     return pool[idx] || pool[0];
   }, [quotes]);
 
-  // Dismiss in-app reminder alert
-  const dismissAlert = useCallback(() => {
-    setActiveAlert(null);
+  // Stop alarm ringing sound and clear alarm modal
+  const dismissAlarm = useCallback(() => {
+    soundManager.stopAlarm();
+    setActiveAlarm(null);
+    if (snoozeTimeoutRef.current) {
+      clearTimeout(snoozeTimeoutRef.current);
+      snoozeTimeoutRef.current = null;
+    }
   }, []);
 
-  // Trigger test reminder
-  const triggerTestReminder = useCallback(() => {
+  // Snooze alarm for X minutes (default 5 min)
+  const snoozeAlarm = useCallback((minutes: number = 5) => {
+    if (!activeAlarm) return;
+    const currentSchedule = activeAlarm.schedule;
+    const currentQuote = activeAlarm.quote;
+
+    // Stop sound right now
+    soundManager.stopAlarm();
+    setActiveAlarm(null);
+
+    // Schedule re-ring
+    if (snoozeTimeoutRef.current) clearTimeout(snoozeTimeoutRef.current);
+    snoozeTimeoutRef.current = setTimeout(() => {
+      if (soundEnabled) {
+        soundManager.startAlarm();
+      }
+      setActiveAlarm({
+        id: 'snooze-alert-' + Date.now(),
+        schedule: currentSchedule,
+        quote: currentQuote,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        isRinging: true,
+      });
+    }, minutes * 60 * 1000);
+  }, [activeAlarm, soundEnabled]);
+
+  // Trigger test alarm clock simulation
+  const triggerTestAlarm = useCallback(() => {
     const sampleSchedule: StudySchedule = schedules[0] || {
       id: 'test-sch',
       user_id: profile.id,
-      subject: 'Sample Focus Session',
+      subject: 'Mathematics',
+      topic: 'Calculus & Derivatives',
+      difficulty: 'Intermediate',
       start_time: '12:00',
       duration_minutes: 30,
       days_of_week: [0, 1, 2, 3, 4, 5, 6],
       is_active: true,
+      notes: 'Sample study session reminder with active alarm ringing & motivational stimulation!',
       created_at: new Date().toISOString(),
     };
     const randomQuote = getRandomQuote();
 
+    if (soundEnabled) {
+      soundManager.startAlarm();
+    }
     sendStudyReminder(sampleSchedule, randomQuote, soundEnabled);
-    setActiveAlert({
-      id: 'test-alert-' + Date.now(),
+    setActiveAlarm({
+      id: 'test-alarm-' + Date.now(),
       schedule: sampleSchedule,
       quote: randomQuote,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      isRinging: true,
     });
   }, [schedules, profile.id, getRandomQuote, soundEnabled]);
 
@@ -300,12 +356,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           if (!lastNotifiedSchedule[notificationKey]) {
             setLastNotifiedSchedule(prev => ({ ...prev, [notificationKey]: todayDateStr }));
             const quote = getRandomQuote();
+            if (soundEnabled) {
+              soundManager.startAlarm();
+            }
             sendStudyReminder(sch, quote, soundEnabled);
-            setActiveAlert({
-              id: 'alert-' + Date.now(),
+            setActiveAlarm({
+              id: 'alarm-' + Date.now(),
               schedule: sch,
               quote,
               timestamp: currentTimeStr,
+              isRinging: true,
             });
           }
         }
@@ -345,6 +405,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // Record completed study session & process streaks
   const recordStudySession = useCallback(async (sessionData: {
     subject: string;
+    topic?: string;
     duration_minutes: number;
     notes?: string;
     rating?: number;
@@ -354,6 +415,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       id: 'sess_' + Math.random().toString(36).substring(2, 9),
       user_id: profile.id,
       subject: sessionData.subject,
+      topic: sessionData.topic,
       duration_minutes: sessionData.duration_minutes,
       notes: sessionData.notes || '',
       rating: sessionData.rating || 5,
@@ -383,6 +445,25 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     return { newBadges, streakIncremented };
   }, [profile, sessions, badges, soundEnabled]);
 
+  // Save practice test result
+  const savePracticeResult = useCallback(async (result: PracticeResult) => {
+    setPracticeResults(prev => [result, ...prev]);
+    
+    // Check if eligible for practice badge
+    const existingBadgeIds = new Set(badges.map(b => b.badge_type));
+    if (!existingBadgeIds.has('practice_ace') && result.percentage >= 80) {
+      setBadges(prev => [
+        {
+          id: 'b-prac-' + Date.now(),
+          user_id: profile.id,
+          badge_type: 'practice_ace',
+          unlocked_at: new Date().toISOString(),
+        },
+        ...prev
+      ]);
+    }
+  }, [badges, profile.id]);
+
   // Add custom quote
   const addCustomQuote = useCallback(async (quote: string, author: string, category: MotivationalQuote['category']) => {
     const newQuote: MotivationalQuote = {
@@ -407,7 +488,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setProfile(prev => ({ ...prev, full_name: name }));
   }, []);
 
-  const streakStats = calculateStreakStats(profile, sessions);
+  const streakStats = calculateStreakStats(profile, sessions, practiceResults.length);
 
   return (
     <AppContext.Provider
@@ -418,18 +499,21 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         quotes,
         badges,
         streakStats,
+        practiceResults,
         soundEnabled,
         setSoundEnabled,
-        activeAlert,
-        dismissAlert,
+        activeAlarm,
+        dismissAlarm,
+        snoozeAlarm,
+        triggerTestAlarm,
         addSchedule,
         updateSchedule,
         deleteSchedule,
         toggleScheduleActive,
         recordStudySession,
+        savePracticeResult,
         addCustomQuote,
         getRandomQuote,
-        triggerTestReminder,
         updateDailyGoal,
         updateProfileName,
         notificationPermission,

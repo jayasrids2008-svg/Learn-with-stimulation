@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, Clock, Calendar, BookOpen, FileText } from 'lucide-react';
-import { DayOfWeek, StudySchedule } from '@/types';
+import { X, Clock, Calendar, BookOpen, FileText, Zap, Sparkles } from 'lucide-react';
+import { DayOfWeek, StudySchedule, SubjectDifficulty } from '@/types';
 import { useApp } from '@/context/AppContext';
 
 interface ScheduleFormModalProps {
@@ -23,10 +23,24 @@ const DAY_LABELS: { label: string; value: DayOfWeek }[] = [
 
 const DURATION_PRESETS = [15, 25, 30, 45, 60, 90, 120];
 
+const COMMON_SUBJECT_SUGGESTIONS = [
+  'Mathematics',
+  'Computer Science',
+  'Physics',
+  'Chemistry',
+  'Biology',
+  'History',
+  'Economics',
+  'Literature',
+  'Psychology'
+];
+
 export function ScheduleFormModal({ isOpen, onClose, editingSchedule }: ScheduleFormModalProps) {
   const { addSchedule, updateSchedule } = useApp();
 
-  const [subject, setSubject] = useState(editingSchedule?.subject || '');
+  const [subject, setSubject] = useState(editingSchedule?.subject || 'Mathematics');
+  const [topic, setTopic] = useState(editingSchedule?.topic || '');
+  const [difficulty, setDifficulty] = useState<SubjectDifficulty>(editingSchedule?.difficulty || 'Intermediate');
   const [startTime, setStartTime] = useState(editingSchedule?.start_time || '18:00');
   const [duration, setDuration] = useState(editingSchedule?.duration_minutes || 45);
   const [selectedDays, setSelectedDays] = useState<DayOfWeek[]>(
@@ -63,7 +77,7 @@ export function ScheduleFormModal({ isOpen, onClose, editingSchedule }: Schedule
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!subject.trim()) {
-      setError('Please enter a subject or topic name.');
+      setError('Please enter a subject name.');
       return;
     }
     if (selectedDays.length === 0) {
@@ -75,6 +89,8 @@ export function ScheduleFormModal({ isOpen, onClose, editingSchedule }: Schedule
       if (editingSchedule) {
         await updateSchedule(editingSchedule.id, {
           subject: subject.trim(),
+          topic: topic.trim() || 'General Subject Focus',
+          difficulty,
           start_time: startTime,
           duration_minutes: duration,
           days_of_week: selectedDays,
@@ -83,6 +99,8 @@ export function ScheduleFormModal({ isOpen, onClose, editingSchedule }: Schedule
       } else {
         await addSchedule({
           subject: subject.trim(),
+          topic: topic.trim() || 'General Subject Focus',
+          difficulty,
           start_time: startTime,
           duration_minutes: duration,
           days_of_week: selectedDays,
@@ -97,17 +115,18 @@ export function ScheduleFormModal({ isOpen, onClose, editingSchedule }: Schedule
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 relative">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 relative max-h-[90vh] overflow-y-auto">
         
         {/* Modal Header */}
         <div className="flex items-center justify-between pb-4 border-b border-slate-100">
           <div>
-            <h3 className="text-lg font-bold text-slate-900">
-              {editingSchedule ? 'Edit Study Reminder' : 'New Study Reminder'}
+            <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+              <Zap className="w-5 h-5 text-amber-500" />
+              <span>{editingSchedule ? 'Edit Study & Alarm Schedule' : 'Schedule Subject & Study Alarm'}</span>
             </h3>
             <p className="text-xs text-slate-700 mt-0.5">
-              Set an allotted time for your daily focus habit
+              Set your subject, content/topic, and ringing alarm time
             </p>
           </div>
           <button
@@ -128,36 +147,75 @@ export function ScheduleFormModal({ isOpen, onClose, editingSchedule }: Schedule
         {/* Form Body */}
         <form onSubmit={handleSubmit} className="mt-4 space-y-4">
           
-          {/* Subject / Topic */}
+          {/* Subject Field */}
           <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-              <BookOpen className="w-3.5 h-3.5 text-amber-600" />
-              <span>Subject or Topic *</span>
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center justify-between">
+              <span className="flex items-center gap-1.5">
+                <BookOpen className="w-3.5 h-3.5 text-amber-600" />
+                <span>Subject *</span>
+              </span>
+              <span className="text-[10px] text-slate-700 font-normal">Choose or type custom</span>
             </label>
             <input
               type="text"
               value={subject}
               onChange={e => setSubject(e.target.value)}
-              placeholder="e.g. Organic Chemistry, Full-Stack Web Dev, Spanish"
+              placeholder="e.g. Mathematics, Computer Science, Biology"
               required
-              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all placeholder:text-slate-400"
+              className="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500"
             />
+            {/* Quick Chips */}
+            <div className="flex flex-wrap gap-1.5 mt-2">
+              {COMMON_SUBJECT_SUGGESTIONS.map(s => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => setSubject(s)}
+                  className={`text-[11px] px-2.5 py-1 rounded-lg font-medium transition-colors ${
+                    subject === s
+                      ? 'bg-amber-100 text-amber-900 font-bold border border-amber-300'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
           </div>
 
-          {/* Time & Duration Row */}
+          {/* Topic / Specific Content */}
+          <div>
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+              <span>Specific Content / Topic to Study</span>
+            </label>
+            <input
+              type="text"
+              value={topic}
+              onChange={e => setTopic(e.target.value)}
+              placeholder="e.g. Calculus: Integrals & Chain Rule, Binary Search Trees"
+              className="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500 placeholder:text-slate-400"
+            />
+            <p className="text-[11px] text-slate-700 mt-1">
+              Practicable test exercises and formula revision cards will be generated based on this content.
+            </p>
+          </div>
+
+          {/* Difficulty & Duration Row */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-                <Clock className="w-3.5 h-3.5 text-amber-600" />
-                <span>Allotted Start Time *</span>
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                Target Level
               </label>
-              <input
-                type="time"
-                value={startTime}
-                onChange={e => setStartTime(e.target.value)}
-                required
-                className="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
-              />
+              <select
+                value={difficulty}
+                onChange={e => setDifficulty(e.target.value as SubjectDifficulty)}
+                className="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500"
+              >
+                <option value="Beginner">Beginner (Foundations)</option>
+                <option value="Intermediate">Intermediate (Core Application)</option>
+                <option value="Advanced">Advanced (Deep Mastery)</option>
+              </select>
             </div>
 
             <div>
@@ -177,6 +235,21 @@ export function ScheduleFormModal({ isOpen, onClose, editingSchedule }: Schedule
                 ))}
               </select>
             </div>
+          </div>
+
+          {/* Allotted Start Time (Alarm Time) */}
+          <div>
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+              <Clock className="w-3.5 h-3.5 text-amber-600" />
+              <span>Alarm Ringing Time *</span>
+            </label>
+            <input
+              type="time"
+              value={startTime}
+              onChange={e => setStartTime(e.target.value)}
+              required
+              className="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500"
+            />
           </div>
 
           {/* Days of Week Selector */}
@@ -230,13 +303,13 @@ export function ScheduleFormModal({ isOpen, onClose, editingSchedule }: Schedule
           <div>
             <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
               <FileText className="w-3.5 h-3.5 text-slate-400" />
-              <span>Notes & Objectives (Optional)</span>
+              <span>Study Objectives & Notes (Optional)</span>
             </label>
             <textarea
               value={notes}
               onChange={e => setNotes(e.target.value)}
               rows={2}
-              placeholder="e.g. Chapter 4 problems 1-10, practice active recall"
+              placeholder="e.g. Solve 5 practice questions and review formula sheet"
               className="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500 placeholder:text-slate-400 resize-none"
             />
           </div>
@@ -254,7 +327,7 @@ export function ScheduleFormModal({ isOpen, onClose, editingSchedule }: Schedule
               type="submit"
               className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl shadow-md transition-colors"
             >
-              {editingSchedule ? 'Save Changes' : 'Create Reminder'}
+              {editingSchedule ? 'Save Changes' : 'Create Study Alarm'}
             </button>
           </div>
 

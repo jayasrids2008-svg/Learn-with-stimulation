@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Clock, Calendar, PlayCircle, Plus, ChevronRight, BellRing } from 'lucide-react';
+import { Clock, Calendar, PlayCircle, Plus, ChevronRight, BellRing, HelpCircle, Zap } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 import { DayOfWeek, StudySchedule } from '@/types';
 
@@ -35,6 +35,7 @@ export function UpcomingReminderCard() {
 
   // If none remaining today, take the first active schedule
   const displayedSchedule = nextSchedule || schedules.find(s => s.is_active) || null;
+  const topicName = displayedSchedule?.topic || 'Core Subject Focus';
 
   return (
     <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm flex flex-col justify-between h-full">
@@ -42,11 +43,11 @@ export function UpcomingReminderCard() {
         {/* Card Header */}
         <div className="flex items-center justify-between gap-2 mb-4">
           <div className="flex items-center gap-2">
-            <span className="p-1.5 rounded-lg bg-indigo-50 text-indigo-700">
-              <BellRing className="w-4 h-4" />
+            <span className="p-1.5 rounded-lg bg-amber-100 text-amber-900">
+              <BellRing className="w-4 h-4 text-amber-700" />
             </span>
             <span className="text-xs font-bold uppercase tracking-wider text-slate-800">
-              Next Scheduled Study
+              Next Scheduled Study Alarm
             </span>
           </div>
 
@@ -67,9 +68,13 @@ export function UpcomingReminderCard() {
                   <h4 className="font-bold text-slate-900 text-base">
                     {displayedSchedule.subject}
                   </h4>
+                  <p className="text-xs font-semibold text-amber-700 mt-0.5 flex items-center gap-1">
+                    <Zap className="w-3 h-3 text-amber-500" />
+                    <span>Topic: {topicName}</span>
+                  </p>
                   {displayedSchedule.notes && (
-                    <p className="text-xs text-slate-700 mt-1 line-clamp-1">
-                      {displayedSchedule.notes}
+                    <p className="text-xs text-slate-700 mt-1 line-clamp-1 italic">
+                      &quot;{displayedSchedule.notes}&quot;
                     </p>
                   )}
                 </div>
@@ -79,8 +84,8 @@ export function UpcomingReminderCard() {
               </div>
 
               <div className="flex items-center gap-4 mt-3 pt-3 border-t border-slate-200/60 text-xs text-slate-700">
-                <span className="flex items-center gap-1">
-                  <Clock className="w-3.5 h-3.5 text-slate-600" />
+                <span className="flex items-center gap-1 font-semibold text-slate-800">
+                  <Clock className="w-3.5 h-3.5 text-amber-600" />
                   <span>{displayedSchedule.duration_minutes} Minutes</span>
                 </span>
                 <span className="flex items-center gap-1">
@@ -97,7 +102,7 @@ export function UpcomingReminderCard() {
             </div>
 
             <p className="text-xs text-slate-700 leading-relaxed">
-              When this allotted time strikes, you will receive an automatic chime alert and motivational quote!
+              When this alarm rings, it will sound on screen with wake-up quotes and direct practice exercises for {topicName}.
             </p>
           </div>
         ) : (
@@ -105,7 +110,7 @@ export function UpcomingReminderCard() {
             <Clock className="w-8 h-8 text-slate-300 mx-auto mb-2" />
             <p className="text-sm font-semibold text-slate-700">No active study slots</p>
             <p className="text-xs text-slate-700 mt-1 max-w-xs mx-auto">
-              Create a scheduled study slot to receive automated motivational reminders.
+              Create a scheduled study slot to receive automated motivational alarms and practice sets.
             </p>
             <Link
               href="/schedule"
@@ -119,13 +124,21 @@ export function UpcomingReminderCard() {
       </div>
 
       {displayedSchedule && (
-        <div className="pt-4 mt-4 border-t border-slate-100">
+        <div className="pt-4 mt-4 border-t border-slate-100 grid grid-cols-2 gap-2">
           <Link
-            href={`/study?subject=${encodeURIComponent(displayedSchedule.subject)}&duration=${displayedSchedule.duration_minutes}&scheduleId=${displayedSchedule.id}`}
-            className="w-full flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold py-2.5 px-4 rounded-xl shadow-sm transition-colors"
+            href={`/practice?subject=${encodeURIComponent(displayedSchedule.subject)}&topic=${encodeURIComponent(topicName)}&scheduleId=${displayedSchedule.id}`}
+            className="flex items-center justify-center gap-1.5 bg-amber-100 hover:bg-amber-200 text-amber-950 text-xs font-bold py-2.5 px-3 rounded-xl transition-colors border border-amber-300"
+          >
+            <HelpCircle className="w-4 h-4 text-amber-700" />
+            <span>Practice Test</span>
+          </Link>
+
+          <Link
+            href={`/study?subject=${encodeURIComponent(displayedSchedule.subject)}&topic=${encodeURIComponent(topicName)}&duration=${displayedSchedule.duration_minutes}&scheduleId=${displayedSchedule.id}`}
+            className="flex items-center justify-center gap-1.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold py-2.5 px-3 rounded-xl shadow-sm transition-colors"
           >
             <PlayCircle className="w-4 h-4 text-amber-400" />
-            <span>Launch Study Session Now</span>
+            <span>Focus Session</span>
           </Link>
         </div>
       )}

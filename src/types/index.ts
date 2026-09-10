@@ -13,15 +13,20 @@ export interface Profile {
   created_at: string;
 }
 
+export type SubjectDifficulty = 'Beginner' | 'Intermediate' | 'Advanced';
+
 export interface StudySchedule {
   id: string;
   user_id: string;
   subject: string;
+  topic?: string; // Specific content/topic to study (e.g. "Integration & Calculus", "Binary Trees")
+  difficulty?: SubjectDifficulty;
   start_time: string; // "HH:MM" 24-hr format
   duration_minutes: number;
   days_of_week: DayOfWeek[];
   is_active: boolean;
   notes?: string;
+  alarm_sound?: 'digital' | 'chime' | 'energetic';
   created_at: string;
 }
 
@@ -30,6 +35,7 @@ export interface StudySession {
   user_id: string;
   schedule_id?: string | null;
   subject: string;
+  topic?: string;
   duration_minutes: number;
   completed_at: string; // ISO string
   notes?: string;
@@ -37,7 +43,7 @@ export interface StudySession {
   created_at: string;
 }
 
-export type QuoteCategory = 'Discipline' | 'Consistency' | 'Focus' | 'Perseverance' | 'Mindset' | 'Procrastination';
+export type QuoteCategory = 'Discipline' | 'Consistency' | 'Focus' | 'Perseverance' | 'Mindset' | 'Procrastination' | 'Encouragement' | 'Mastery';
 
 export interface MotivationalQuote {
   id: string;
@@ -60,14 +66,16 @@ export type BadgeId =
   | 'hours_50'
   | 'early_bird'
   | 'night_owl'
-  | 'weekend_warrior';
+  | 'weekend_warrior'
+  | 'practice_ace'
+  | 'quiz_master';
 
 export interface BadgeDefinition {
   id: BadgeId;
   title: string;
   description: string;
   icon: string;
-  category: 'streak' | 'time' | 'habit';
+  category: 'streak' | 'time' | 'habit' | 'practice';
   requiredValue: number;
 }
 
@@ -94,4 +102,54 @@ export interface StreakStats {
   isTodayCompleted: boolean;
   totalStudyMinutes: number;
   totalSessionsCount: number;
+  totalPracticeExercises: number;
+}
+
+// Practice Question & Test Types
+export interface PracticeQuestion {
+  id: string;
+  question: string;
+  options: string[];
+  correctIndex: number;
+  explanation: string;
+  hint: string;
+  conceptTag: string;
+}
+
+export interface PracticeExerciseSet {
+  id: string;
+  subject: string;
+  topic: string;
+  difficulty: SubjectDifficulty;
+  questions: PracticeQuestion[];
+  summaryNotes: string;
+  keyFormulasOrConcepts: string[];
+}
+
+export interface UserAnswerRecord {
+  questionId: string;
+  questionText: string;
+  selectedOptionIndex: number;
+  correctOptionIndex: number;
+  isCorrect: boolean;
+  explanation: string;
+  conceptTag: string;
+}
+
+export interface PracticeResult {
+  id: string;
+  scheduleId?: string | null;
+  subject: string;
+  topic: string;
+  score: number;
+  totalQuestions: number;
+  percentage: number;
+  timeSpentSeconds: number;
+  answers: UserAnswerRecord[];
+  missedConcepts: string[];
+  masteredConcepts: string[];
+  encouragingQuote: MotivationalQuote;
+  revisionNotes: string[];
+  actionRecommendation: string;
+  completedAt: string;
 }

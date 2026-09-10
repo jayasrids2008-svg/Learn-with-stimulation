@@ -16,7 +16,8 @@ import {
   Menu, 
   X,
   PlayCircle,
-  Sparkles
+  Sparkles,
+  HelpCircle
 } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 
@@ -26,7 +27,7 @@ export function Navbar() {
     streakStats, 
     soundEnabled, 
     setSoundEnabled, 
-    triggerTestReminder, 
+    triggerTestAlarm, 
     profile, 
     notificationPermission, 
     requestPermission 
@@ -35,11 +36,11 @@ export function Navbar() {
 
   const navLinks = [
     { href: '/', label: 'Dashboard', icon: Sparkles },
-    { href: '/schedule', label: 'Schedules & Reminders', icon: Calendar },
+    { href: '/schedule', label: 'Schedules & Alarms', icon: Calendar },
+    { href: '/practice', label: 'Practice Exercises', icon: HelpCircle },
     { href: '/study', label: 'Focus Timer', icon: Clock },
     { href: '/analytics', label: 'Streaks & Analytics', icon: BarChart3 },
     { href: '/quotes', label: 'Quotes Hub', icon: Quote },
-    { href: '/supabase-setup', label: 'Database Setup', icon: Database },
   ];
 
   return (
@@ -103,14 +104,14 @@ export function Navbar() {
               <span>{streakStats.currentStreak} Day Streak</span>
             </Link>
 
-            {/* Test Reminder Trigger Button */}
+            {/* Test Alarm Clock Trigger Button */}
             <button
-              onClick={triggerTestReminder}
-              title="Test study reminder notification & audio chime"
+              onClick={triggerTestAlarm}
+              title="Test ringing study alarm clock with quotes & sound"
               className="p-2 text-slate-500 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors relative"
             >
-              <Bell className="w-4 h-4" />
-              <span className="sr-only">Test Reminder</span>
+              <Bell className="w-4 h-4 text-amber-600 animate-bounce" />
+              <span className="sr-only">Test Alarm</span>
             </button>
 
             {/* Sound Toggle Button */}
@@ -204,13 +205,13 @@ export function Navbar() {
 
             <button
               onClick={() => {
-                triggerTestReminder();
+                triggerTestAlarm();
                 setMobileMenuOpen(false);
               }}
               className="w-full flex items-center justify-center gap-2 px-3 py-2 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-50"
             >
               <Bell className="w-4 h-4 text-amber-600" />
-              <span>Test Study Reminder Popup</span>
+              <span>Test Ringing Study Alarm Clock</span>
             </button>
 
             <Link

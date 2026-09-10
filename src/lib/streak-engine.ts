@@ -17,8 +17,12 @@ export function daysBetween(dateStr1: string, dateStr2: string): number {
   return Math.round(diffTime / (1000 * 60 * 60 * 24));
 }
 
-// Evaluate user streak statistics given profile and sessions
-export function calculateStreakStats(profile: Profile | null, sessions: StudySession[]): StreakStats {
+// Evaluate user streak statistics given profile, sessions and practice results
+export function calculateStreakStats(
+  profile: Profile | null, 
+  sessions: StudySession[],
+  practiceCount: number = 0
+): StreakStats {
   const todayStr = getLocalDateString();
   const dailyGoalMinutes = profile?.daily_goal_minutes || 45;
 
@@ -56,6 +60,7 @@ export function calculateStreakStats(profile: Profile | null, sessions: StudySes
     isTodayCompleted,
     totalStudyMinutes,
     totalSessionsCount,
+    totalPracticeExercises: practiceCount,
   };
 }
 

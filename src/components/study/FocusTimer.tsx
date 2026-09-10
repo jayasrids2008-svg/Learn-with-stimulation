@@ -18,7 +18,9 @@ import {
   ArrowLeft,
   Maximize2,
   Minimize2,
-  Award
+  Award,
+  HelpCircle,
+  Zap
 } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 import { MotivationalQuote, UserBadge } from '@/types';
@@ -38,11 +40,13 @@ export function FocusTimer() {
   } = useApp();
 
   // Initial params
-  const initialSubject = searchParams.get('subject') || 'General Focus Study';
+  const initialSubject = searchParams.get('subject') || 'Mathematics';
+  const initialTopic = searchParams.get('topic') || 'Calculus & Derivatives';
   const initialDuration = Number(searchParams.get('duration')) || 25;
   const initialScheduleId = searchParams.get('scheduleId') || null;
 
   const [subject, setSubject] = useState(initialSubject);
+  const [topic, setTopic] = useState(initialTopic);
   const [targetMinutes, setTargetMinutes] = useState(initialDuration);
   const [secondsRemaining, setSecondsRemaining] = useState(initialDuration * 60);
   const [isActive, setIsActive] = useState(false);
@@ -155,6 +159,7 @@ export function FocusTimer() {
     try {
       const result = await recordStudySession({
         subject: subject.trim() || 'Focus Session',
+        topic: topic.trim() || undefined,
         duration_minutes: completedMinutes,
         notes: sessionNotes.trim(),
         rating,
@@ -254,17 +259,40 @@ export function FocusTimer() {
           </button>
         </div>
 
-        {/* Subject Selector / Input */}
-        <div className="max-w-md mx-auto mb-6 relative z-10">
-          <div className="flex items-center gap-2 bg-slate-800/60 border border-slate-700 rounded-2xl px-4 py-2">
-            <BookOpen className="w-4 h-4 text-amber-400 shrink-0" />
-            <input
-              type="text"
-              value={subject}
-              onChange={e => setSubject(e.target.value)}
-              placeholder="What are you studying right now?"
-              className="bg-transparent text-sm font-semibold text-white focus:outline-none w-full placeholder:text-slate-500"
-            />
+        {/* Subject & Topic Selector / Input */}
+        <div className="max-w-lg mx-auto mb-6 space-y-2 relative z-10">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div className="flex items-center gap-2 bg-slate-800/60 border border-slate-700 rounded-2xl px-3.5 py-2">
+              <BookOpen className="w-4 h-4 text-amber-400 shrink-0" />
+              <input
+                type="text"
+                value={subject}
+                onChange={e => setSubject(e.target.value)}
+                placeholder="Subject..."
+                className="bg-transparent text-xs font-semibold text-white focus:outline-none w-full placeholder:text-slate-500"
+              />
+            </div>
+            <div className="flex items-center gap-2 bg-slate-800/60 border border-slate-700 rounded-2xl px-3.5 py-2">
+              <Zap className="w-4 h-4 text-amber-400 shrink-0" />
+              <input
+                type="text"
+                value={topic}
+                onChange={e => setTopic(e.target.value)}
+                placeholder="Topic / Chapter..."
+                className="bg-transparent text-xs font-semibold text-white focus:outline-none w-full placeholder:text-slate-500"
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-center">
+            <button
+              type="button"
+              onClick={() => router.push(`/practice?subject=${encodeURIComponent(subject)}&topic=${encodeURIComponent(topic)}`)}
+              className="text-[11px] font-bold text-amber-400 hover:text-amber-300 flex items-center gap-1 bg-amber-400/10 border border-amber-400/20 px-3 py-1 rounded-xl transition-colors"
+            >
+              <HelpCircle className="w-3.5 h-3.5" />
+              <span>Take Practicable Exercises on &quot;{topic || subject}&quot;</span>
+            </button>
           </div>
         </div>
 
